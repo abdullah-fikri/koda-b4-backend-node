@@ -13,110 +13,314 @@ datasource db {
   provider = "sqlite"
 }
 
-model User {
-  id       Int      @id @default(autoincrement())
-  email    String   @unique
-  password String
-  role String @default("user")
-  profile  Profile?
+model users {
+  id         Int        @id @default(autoincrement())
+  email      String     @unique
+  password   String?
+  role       String?    @default("user")
+  created_at DateTime?  @default(now())
+  updated_at DateTime?  @default(now())
+
+  profile profile?
+  carts   cart[]
+  orders     orders[]
 
   @@map("users")
 }
 
-model Profile {
-  id       Int    @id @default(autoincrement())
-  fullname String
-  image    String?
-  address  String?
-  phone    String?
-  userId   Int    @unique
-  user     User   @relation(fields: [userId], references: [id])
+model profile {
+  id              Int        @id @default(autoincrement())
+  users_id Int @unique
+  username        String?
+  phone           String?
+  address         String?
+  profile_picture String?
+  created_at      DateTime?  @default(now())
+  updated_at      DateTime?  @default(now())
+
+  user users? @relation(fields: [users_id], references: [id])
 
   @@map("profile")
 }
 
-model Category {
-  id    Int      @id @default(autoincrement())
-  name  String
-  products Product[]
+model payment {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  img        String?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  orders orders[]
+
+  @@map("payment")
+}
+
+model shippings {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  orders orders[]
+
+  @@map("shippings")
+}
+
+model categories {
+  id         Int        @id @default(autoincrement())
+  name       String?
+  created_at DateTime?  @default(now())
+  updated_at DateTime?  @default(now())
+
+  products products[]
 
   @@map("categories")
 }
 
-model Product {
-  id        Int       @id @default(autoincrement())
-  name      String
-  price     Int
-  desc      String
-  stock     Int
-  image     String?
-  categoryId Int
+model products {
+  id          Int           @id @default(autoincrement())
+  name        String?
+  description String?
+  price       Decimal?
+  stock       Int?
+  category_id Int?
+  is_favorite Boolean      @default(false)
+  created_at  DateTime?    @default(now())
+  updated_at  DateTime?    @default(now())
 
-  category  Category @relation(fields: [categoryId], references: [id])
-
-  sizes     ProductSize[]
-  variants  ProductVariant[]
-  methods   ProductMethod[]
+  category categories? @relation(fields: [category_id], references: [id])
+  images   product_img[]
+  variants product_variant[]
+  sizes    product_size[]
+  methods  product_method[]
+  order_items order_items[]
+  cart_items  cart_items[]
+  product_discount product_discount[]
+  product_promo_card product_promo_card[]
 
   @@map("products")
 }
 
-model Size {
-  id        Int    @id @default(autoincrement())
-  name      String
-  add_price Int
-  products  ProductSize[]
+model product_img {
+  id         Int       @id @default(autoincrement())
+  image      String?
+  product_id Int?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 
-  @@map("sizes")
+  product products? @relation(fields: [product_id], references: [id])
+
+  @@map("product_img")
 }
 
-model Variant {
-  id        Int   @id @default(autoincrement())
-  name      String
-  add_price Int
-  products  ProductVariant[]
+model variant {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 
-  @@map("variants")
+  cart_items cart_items[]
+  products product_variant[]
+  order_items order_items[]
+
+  @@map("variant")
 }
 
-model Method {
-  id        Int   @id @default(autoincrement())
-  name      String
-  add_price Int
-  products  ProductMethod[]
+model size {
+  id         Int       @id @default(autoincrement())
+  name       String?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 
-  @@map("methods")
+  products product_size[]
+  order_items order_items[]
+  cart_items cart_items[]
+
+  @@map("size")
 }
 
+model product_variant {
+  id         Int       @id @default(autoincrement())
+  variant_id Int?
+  product_id Int?
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 
-model ProductSize {
-   id        Int   @id @default(autoincrement())
+  variant variant? @relation(fields: [variant_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id])
 
-  productId Int
-  sizeId    Int
-  product   Product @relation(fields: [productId], references: [id])
-  size      Size    @relation(fields: [sizeId], references: [id])
-
-  @@map("product_sizes")
+  @@map("product_variant")
 }
 
-model ProductVariant {
-  id  Int  @id @default(autoincrement())
+model product_size {
+  id         Int       @id @default(autoincrement())
+  product_id Int?
+  size_id    Int?
+  price      Decimal
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
 
-  productId Int
-  variantId Int
-  product   Product @relation(fields: [productId], references: [id])
-  variant   Variant @relation(fields: [variantId], references: [id])
+  product products? @relation(fields: [product_id], references: [id])
+  size    size?     @relation(fields: [size_id], references: [id])
 
-  @@map("product_variants")
+  @@map("product_size")
 }
 
-model ProductMethod {
-   id        Int   @id @default(autoincrement())
-  productId Int
-  methodId  Int
-  product   Product @relation(fields: [productId], references: [id])
-  method    Method  @relation(fields: [methodId], references: [id])
+model method {
+  id              Int       @id @default(autoincrement())
+  name            String?
+  additional_price Decimal? @default(0)
+  created_at      DateTime? @default(now())
+  updated_at      DateTime? @default(now())
 
-  @@map("product_methods")
+  products product_method[]
+  orders orders[]
+
+  @@map("method")
+}
+
+model product_method {
+  id         Int       @id @default(autoincrement())
+  product_id Int
+  method_id  Int
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  product products @relation(fields: [product_id], references: [id])
+  method  method   @relation(fields: [method_id], references: [id])
+
+  @@map("product_method")
+}
+
+model orders {
+  id             Int       @id @default(autoincrement())
+  users_id       Int?
+  payment_id     Int?
+  shipping_id    Int?
+  method_id      Int?
+  order_date     DateTime?
+  customer_name  String?
+  customer_phone String?
+  customer_address String?
+  total          Decimal?
+  invoice        String?
+  tax            Decimal? @default(0)
+  created_at     DateTime? @default(now())
+  updated_at     DateTime? @default(now())
+
+  user     users?     @relation(fields: [users_id], references: [id])
+  payment  payment?   @relation(fields: [payment_id], references: [id])
+  shipping shippings? @relation(fields: [shipping_id], references: [id])
+  method   method?    @relation(fields: [method_id], references: [id])
+
+  items order_items[]
+
+  @@map("orders")
+}
+
+model order_items {
+  id              Int       @id @default(autoincrement())
+  order_id        Int?
+  product_id      Int?
+  variant_id      Int?
+  size_id         Int?
+  qty             Int?
+  subtotal        Decimal?
+  base_price      Decimal?
+  discount_price  Decimal?
+  discount_percent Decimal?
+  created_at      DateTime? @default(now())
+  updated_at      DateTime? @default(now())
+
+  order   orders?   @relation(fields: [order_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id])
+  variant variant?  @relation(fields: [variant_id], references: [id])
+  size    size?     @relation(fields: [size_id], references: [id])
+
+  @@map("order_items")
+}
+
+model discount {
+  id              Int       @id @default(autoincrement())
+  name            String?
+  start_discount  DateTime?
+  end_discount    DateTime?
+  is_active       Boolean? @default(true)
+  percent_discount Float?
+  created_at      DateTime? @default(now())
+  updated_at      DateTime? @default(now())
+
+  products product_discount[]
+
+  @@map("discount")
+}
+
+model promo_card {
+  id         Int      @id @default(autoincrement())
+  name       String?
+  start      DateTime?
+  end_promo  DateTime?
+  is_active  Boolean? @default(true)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  products product_promo_card[]
+
+  @@map("promo_card")
+}
+
+model product_discount {
+  id          Int       @id @default(autoincrement())
+  product_id  Int?
+  discount_id Int?
+  created_at  DateTime? @default(now())
+  updated_at  DateTime? @default(now())
+
+  product  products? @relation(fields: [product_id], references: [id])
+  discount discount? @relation(fields: [discount_id], references: [id])
+
+  @@map("product_discount")
+}
+
+model product_promo_card {
+  id            Int       @id @default(autoincrement())
+  promo_card_id Int?
+  product_id    Int?
+  created_at    DateTime? @default(now())
+  updated_at    DateTime? @default(now())
+
+  promo  promo_card? @relation(fields: [promo_card_id], references: [id])
+  product products?   @relation(fields: [product_id], references: [id])
+
+  @@map("product_promo_card")
+}
+
+model cart {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  user  users @relation(fields: [user_id], references: [id])
+  items cart_items[]
+
+  @@map("cart")
+}
+
+model cart_items {
+  id         Int       @id @default(autoincrement())
+  cart_id    Int
+  product_id Int
+  variant_id Int?
+  size_id    Int?
+  qty        Int
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now())
+
+  cart    cart    @relation(fields: [cart_id], references: [id])
+  product products @relation(fields: [product_id], references: [id])
+  variant variant? @relation(fields: [variant_id], references: [id])
+  size    size?    @relation(fields: [size_id], references: [id])
+
+  @@map("cart_items")
 }
