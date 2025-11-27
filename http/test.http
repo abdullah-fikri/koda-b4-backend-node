@@ -1,0 +1,75 @@
+###
+POST /auth/register
+Host: localhost:8000
+Content-Type: application/json
+
+{
+    "fullname": "fiki",
+    "email": "fiki12345678@mail.com",
+    "password": "12345678"
+}
+
+###
+POST /auth/login
+Host: localhost:8000
+Content-Type: application/json
+
+{
+    "email": "fiki12345678@mail.com",
+    "password": "12345678"
+}
+
+
+/// products
+###
+GET /products
+Host: localhost:8000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzY0MjE0NzEyLCJleHAiOjE3NjQyMTU2MTJ9.nLpSRsoqg5vGbp6rNUWYz5-wMiUV3uN3UNMfUdtyw3o
+
+###
+GET /products/1
+Host: localhost:8000
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzY0MjE5MDE1LCJleHAiOjE3NjQyMTk5MTV9.2PZztBBoLC_bm5-R52_CRw6F8jD4yvUsDtWEZr0nzx8
+
+
+
+/// create products
+###
+POST /products
+Host: localhost:8000
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzY0MjE5MDE1LCJleHAiOjE3NjQyMTk5MTV9.2PZztBBoLC_bm5-R52_CRw6F8jD4yvUsDtWEZr0nzx8
+
+
+{
+  "name": "Americano",
+  "price": 20000,
+  "desc": "Coffee",
+  "stock": 20,
+  "categoryId": 1,
+
+  "sizes": [1, 2, 3],
+  "variants": [1, 3],
+  "methods": [2]
+}
+
+
+/// edit products
+### 
+PATCH /products/4
+Host: localhost:8000
+Content-Type: application/json
+
+{
+    "name": "indomie",
+    "price": 2000
+}
+
+/// delete products
+###
+DELETE /products/3
+Host: localhost:8000
+
+### seed 
+POST /api/seed
+Host: localhost:8000

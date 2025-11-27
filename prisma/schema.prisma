@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  profile  Profile?
+
+  @@map("users")
+}
+
+model Profile {
+  id       Int    @id @default(autoincrement())
+  fullname String
+  image    String?
+  address  String?
+  phone    String?
+  userId   Int    @unique
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@map("profile")
+}
+
+model Category {
+  id    Int      @id @default(autoincrement())
+  name  String
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id        Int       @id @default(autoincrement())
+  name      String
+  price     Int
+  desc      String
+  stock     Int
+  image     String?
+  categoryId Int
+
+  category  Category @relation(fields: [categoryId], references: [id])
+
+  sizes     ProductSize[]
+  variants  ProductVariant[]
+  methods   ProductMethod[]
+
+  @@map("products")
+}
+
+model Size {
+  id        Int    @id @default(autoincrement())
+  name      String
+  add_price Int
+  products  ProductSize[]
+
+  @@map("sizes")
+}
+
+model Variant {
+  id        Int   @id @default(autoincrement())
+  name      String
+  add_price Int
+  products  ProductVariant[]
+
+  @@map("variants")
+}
+
+model Method {
+  id        Int   @id @default(autoincrement())
+  name      String
+  add_price Int
+  products  ProductMethod[]
+
+  @@map("methods")
+}
+
+
+model ProductSize {
+   id        Int   @id @default(autoincrement())
+
+  productId Int
+  sizeId    Int
+  product   Product @relation(fields: [productId], references: [id])
+  size      Size    @relation(fields: [sizeId], references: [id])
+
+  @@map("product_sizes")
+}
+
+model ProductVariant {
+  id  Int  @id @default(autoincrement())
+
+  productId Int
+  variantId Int
+  product   Product @relation(fields: [productId], references: [id])
+  variant   Variant @relation(fields: [variantId], references: [id])
+
+  @@map("product_variants")
+}
+
+model ProductMethod {
+   id        Int   @id @default(autoincrement())
+  productId Int
+  methodId  Int
+  product   Product @relation(fields: [productId], references: [id])
+  method    Method  @relation(fields: [methodId], references: [id])
+
+  @@map("product_methods")
+}

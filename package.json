@@ -1,0 +1,40 @@
+{
+  "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.0.1",
+    "@prisma/adapter-pg": "^7.0.1",
+    "argon2": "^0.44.0",
+    "better-sqlite3": "^12.4.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-jsdoc-swagger": "^1.8.0",
+    "express-validator": "^7.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3"
+  },
+  "name": "minitask1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "@prisma/client": "^7.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "eslint": "^9.39.1",
+    "prisma": "^7.0.1"
+  },
+  "scripts": {
+    "dev": "node --watch index.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "migrate:create": "prisma migrate dev --name",
+    "migrate:run": "prisma migrate dev",
+    "migrate:reset": "prisma migrate reset",
+    "orm:generate": "prisma generate"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
+}
