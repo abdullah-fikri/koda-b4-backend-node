@@ -5,5 +5,6 @@ const router = express.Router()
 
 router.get("/admin/user", user.getAllUserController)
 router.get("/admin/user/:id", user.getUserByIdController)
+router.patch("/admin/user/:id", user.updateUserController)
 
 export default router

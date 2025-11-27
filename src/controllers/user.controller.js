@@ -2,7 +2,8 @@ import userModel from "../models/user.model.js";
 
 const {
     getAllUser,
-    getUserById
+    getUserById,
+    updateUser
 } = userModel
 
 async function getAllUserController(req, res){
@@ -48,4 +49,30 @@ async function getUserByIdController(req, res){
     }
 }
 
-export default { getAllUserController, getUserByIdController }
+async function updateUserController(req, res){
+    try {
+        const id = parseInt(req.params.id)
+        let role, fullname,address, phone = req.body
+
+        const updated = await updateUser(id, role, fullname, address, phone)
+        if (!updated){
+            return res.status(500).json({
+                success: false,
+                message: "user not found",
+            })
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "updated successfully",
+            result: updated
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export default { getAllUserController, getUserByIdController, updateUserController }

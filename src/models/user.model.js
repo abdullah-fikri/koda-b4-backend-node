@@ -26,4 +26,36 @@ async function getUserById(id){
     return result
 }
 
-export default { getAllUser, getUserById };
+
+// update/edit user
+async function updateUser(id, role, fullname, address, phone) {
+  try {
+    const data = {}
+    if (role !== undefined) {
+      data.role = role
+    }
+    
+    if (fullname !== undefined || address !== undefined || phone !== undefined) {
+      data.profile = {
+        update: {}
+      }
+
+      if (fullname !== undefined) data.profile.update.fullname = fullname
+      if (address !== undefined) data.profile.update.address = address
+      if (phone !== undefined) data.profile.update.phone = phone
+    }
+
+    const updated = await prisma.user.update({
+      where: { id },
+      data
+    })
+
+    return updated
+  } catch (error) {
+    console.log(error)
+    return null
+  }
+}
+
+
+export default { getAllUser, getUserById, updateUser };
