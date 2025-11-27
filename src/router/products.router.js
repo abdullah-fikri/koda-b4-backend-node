@@ -13,10 +13,6 @@ router.post(
     name: {
       notEmpty: { errorMessage: "name product is required" },
     },
-    price: {
-      notEmpty: { errorMessage: "price is required" },
-      isInt: { errorMessage: "price must be an integer" },
-    },
   }),
   products.create
 );
