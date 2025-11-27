@@ -52,7 +52,7 @@ async function getUserByIdController(req, res){
 async function updateUserController(req, res){
     try {
         const id = parseInt(req.params.id)
-        let role, fullname,address, phone = req.body
+        const { role, fullname, address, phone } = req.body;
 
         const updated = await updateUser(id, role, fullname, address, phone)
         if (!updated){
