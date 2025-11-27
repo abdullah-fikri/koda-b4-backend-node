@@ -34,7 +34,7 @@ async function updateUser(id, role, fullname, address, phone) {
     if (role !== undefined) {
       data.role = role
     }
-    
+
     if (fullname !== undefined || address !== undefined || phone !== undefined) {
       data.profile = {
         update: {}
@@ -58,4 +58,23 @@ async function updateUser(id, role, fullname, address, phone) {
 }
 
 
-export default { getAllUser, getUserById, updateUser };
+/// remove user
+async function removeUser(id){
+  try {
+    await prisma.profile.deleteMany({
+      where: { userId: id }
+    });
+
+    await prisma.user.delete({
+      where: { id }
+    });
+    
+    return true;
+
+  } catch (error) {
+    return false;
+  }
+}
+
+
+export default { getAllUser, getUserById, updateUser, removeUser };

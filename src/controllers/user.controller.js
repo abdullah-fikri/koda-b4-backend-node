@@ -3,7 +3,8 @@ import userModel from "../models/user.model.js";
 const {
     getAllUser,
     getUserById,
-    updateUser
+    updateUser,
+    removeUser,
 } = userModel
 
 async function getAllUserController(req, res){
@@ -75,4 +76,28 @@ async function updateUserController(req, res){
     }
 }
 
-export default { getAllUserController, getUserByIdController, updateUserController }
+async function removeUserController(req, res){
+    try {
+        const id = parseInt(req.params.id)
+        const deleted = await removeUser(id)
+
+        if (!deleted){
+            return res.status(404).json({
+                success: false,
+                message: "user not found"
+            })
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "user deleted"
+        })
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        })
+    }
+}
+
+export default { getAllUserController, getUserByIdController, updateUserController, removeUserController }
