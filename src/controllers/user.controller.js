@@ -115,8 +115,6 @@ async function uploadProfilePicture(req, res){
     }
 
     upload.single("image")(req, res, async (err) => {
-        const profile = {}
-        console.log(user)
         try {
             if (err){
                 return res.status(400).json({
