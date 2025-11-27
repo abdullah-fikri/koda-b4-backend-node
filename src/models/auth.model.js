@@ -1,10 +1,8 @@
-const dataAuth = [];
-let id = 1;
 import prisma from "../lib/prisma.js";
 
 
 async function registerModel(fullname, email, password) {
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.users.create({
       data: {
         email,
         password,
@@ -17,7 +15,7 @@ async function registerModel(fullname, email, password) {
 }
 
 async function loginModel(email) {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
         where: { email }
     });
     return user;
@@ -26,5 +24,4 @@ async function loginModel(email) {
 export default {
     registerModel,
     loginModel,
-    dataAuth
 };

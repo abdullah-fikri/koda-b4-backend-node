@@ -2,10 +2,10 @@ import prisma from "../lib/prisma.js";
 
 // get all user
 async function getAllUser(search = "") {
-  return await prisma.user.findMany({
+  return await prisma.users.findMany({
     where: {
       profile: {
-        fullname: {
+        username: {
           contains: search,
         },
       },
@@ -18,7 +18,7 @@ async function getAllUser(search = "") {
 
 // get user by id
 async function getUserById(id){
-    const result = await prisma.user.findUnique({
+    const result = await prisma.users.findUnique({
         where: {
             id: id
         }
@@ -30,7 +30,7 @@ async function getUserById(id){
 // update/edit user
 async function updateUser(id, role, fullname, address, phone, image=null) {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: { id },
       include: { profile: true }
     })
@@ -49,7 +49,7 @@ async function updateUser(id, role, fullname, address, phone, image=null) {
       }
     }
 
-    const updated = await prisma.user.update({
+    const updated = await prisma.users.update({
       where: { id },
       data
     })
@@ -67,10 +67,10 @@ async function updateUser(id, role, fullname, address, phone, image=null) {
 async function removeUser(id){
   try {
     await prisma.profile.deleteMany({
-      where: { userId: id }
+      where: { users_id: id }
     });
 
-    await prisma.user.delete({
+    await prisma.users.delete({
       where: { id }
     });
 
