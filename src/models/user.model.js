@@ -30,20 +30,23 @@ async function getUserById(id){
 // update/edit user
 async function updateUser(id, role, fullname, address, phone, image=null) {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    })
+
+    if (!user) return null
     const data = {}
-    if (role !== undefined) {
-      data.role = role
-    }
 
-    if (fullname !== undefined || address !== undefined || phone !== undefined) {
-      data.profile = {
-        update: {}
+    if (role !== undefined) data.role = role
+
+    data.profile = {
+      update: {
+        fullname: fullname ?? user.profile.fullname,
+        address: address ?? user.profile.address,
+        phone: phone ?? user.profile.phone,
+        image: image ?? user.profile.image
       }
-
-      if (fullname !== undefined) data.profile.update.fullname = fullname
-      if (address !== undefined) data.profile.update.address = address
-      if (phone !== undefined) data.profile.update.phone = phone
-      if (image !== undefined) data.profile.update.image = image
     }
 
     const updated = await prisma.user.update({
@@ -57,6 +60,7 @@ async function updateUser(id, role, fullname, address, phone, image=null) {
     return null
   }
 }
+
 
 
 /// remove user
