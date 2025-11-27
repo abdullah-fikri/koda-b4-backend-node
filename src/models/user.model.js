@@ -28,7 +28,7 @@ async function getUserById(id){
 
 
 // update/edit user
-async function updateUser(id, role, fullname, address, phone) {
+async function updateUser(id, role, fullname, address, phone, image=null) {
   try {
     const data = {}
     if (role !== undefined) {
@@ -43,6 +43,7 @@ async function updateUser(id, role, fullname, address, phone) {
       if (fullname !== undefined) data.profile.update.fullname = fullname
       if (address !== undefined) data.profile.update.address = address
       if (phone !== undefined) data.profile.update.phone = phone
+      if (image !== undefined) data.profile.update.image = image
     }
 
     const updated = await prisma.user.update({
@@ -68,7 +69,7 @@ async function removeUser(id){
     await prisma.user.delete({
       where: { id }
     });
-    
+
     return true;
 
   } catch (error) {
