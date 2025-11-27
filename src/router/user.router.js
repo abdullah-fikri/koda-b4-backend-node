@@ -7,5 +7,6 @@ router.get("/admin/user", user.getAllUserController)
 router.get("/admin/user/:id", user.getUserByIdController)
 router.patch("/admin/user/:id", user.updateUserController)
 router.delete("/admin/user/:id", user.removeUserController)
+router.patch("/admin/user/:id/image", user.uploadProfilePicture)
 
 export default router
