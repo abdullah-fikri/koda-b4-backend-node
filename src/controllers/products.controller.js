@@ -9,6 +9,7 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  getFavoriteProducts
 } = productsModel;
 
 /**
@@ -298,6 +299,35 @@ function formatProduct(p) {
 }
 
 
+export async function favoriteProducts(req, res) {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 4;
+
+    const { products, total } = await getFavoriteProducts(page, limit);
+    const mapped = products.map(formatProduct);
+
+    const totalPage = Math.ceil(total / limit);
+
+    const links = hateoas(req, page, limit, totalPage);
+
+    return res.status(200).json({
+      success: true,
+      message: "favorite products",
+      links,
+      data: mapped,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "internal server error",
+    });
+  }
+}
+
+
 export default {
   getProducts,
   getProduct,
@@ -305,4 +335,5 @@ export default {
   update,
   remove,
   uploadPictureProduct,
+  favoriteProducts
 };
