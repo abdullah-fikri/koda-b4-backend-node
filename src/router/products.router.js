@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.get("/products", products.getProducts);
 router.get("/products/:id", products.getProduct);
+router.get("/favorite-products", products.favoriteProducts)
 
 router.post(
   "/products",
