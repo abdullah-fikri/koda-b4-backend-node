@@ -1,12 +1,12 @@
 import prisma from "../lib/prisma.js";
 
 
-async function registerModel(fullname, email, password) {
+async function registerModel(username, email, password) {
     const newUser = await prisma.users.create({
       data: {
         email,
         password,
-        profile: { create: { fullname } } },
+        profile: { create: { username } } },
       include: {
         profile: true
       }
