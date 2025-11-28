@@ -28,9 +28,9 @@ async function authRegister(req, res){
                 result: errors.array()
             });
         }
-        const { fullname, email, password } = req.body;
+        const { username, email, password } = req.body;
         const hashed = await hashPassword(password)
-        const newUser = await registerModel(fullname, email, hashed);
+        const newUser = await registerModel(username, email, hashed);
     
         res.status(200).json({
             success: true,
@@ -91,7 +91,14 @@ async function authLogin(req, res) {
       return res.status(200).json({
         success: true,
         message: "login success",
-        result: token
+        data: {
+          user: {
+            id: user.id,
+            email: user.email,
+            role: user.role
+          },
+          token: token
+        }
       });
   
     } catch (error) {
