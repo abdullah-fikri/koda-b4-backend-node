@@ -299,11 +299,54 @@ async function getRecommendationsByCategory(categoryName, excludeID) {
 }
 
 
+
+export async function getFavoriteProducts(page, limit) {
+  const offset = (page - 1) * limit;
+
+  const products = await prisma.products.findMany({
+    where: { is_favorite: true },
+
+    include: {
+      category: { select: { name: true } },
+
+      images: {                  
+        select: { image: true },
+      },
+
+      variants: {               
+        select: {
+          variant: { select: { id: true, name: true } }
+        },
+      },
+
+      sizes: {                   
+        select: {
+          size: { select: { id: true, name: true } },
+          price: true,
+        },
+      },
+    },
+
+    skip: offset,
+    take: limit,
+    orderBy: { created_at: "desc" },
+  });
+
+  const total = await prisma.products.count({
+    where: { is_favorite: true }
+  });
+
+  return { products, total };
+}
+
+
+
 export default {
   getAllProducts,
   getProductById,
   createProduct,
   updateProduct,
   deleteProduct,
-  getRecommendationsByCategory
+  getRecommendationsByCategory,
+  getFavoriteProducts
 };
