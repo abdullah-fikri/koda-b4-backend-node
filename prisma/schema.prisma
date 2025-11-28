@@ -5,12 +5,12 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
 }
 
 model users {
@@ -108,7 +108,7 @@ model product_img {
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
 
-  product products? @relation(fields: [product_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@map("product_img")
 }
@@ -147,7 +147,7 @@ model product_variant {
   updated_at DateTime? @default(now())
 
   variant variant? @relation(fields: [variant_id], references: [id])
-  product products? @relation(fields: [product_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@map("product_variant")
 }
@@ -160,7 +160,7 @@ model product_size {
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
 
-  product products? @relation(fields: [product_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id], onDelete: Cascade)
   size    size?     @relation(fields: [size_id], references: [id])
 
   @@map("product_size")
@@ -186,7 +186,7 @@ model product_method {
   created_at DateTime? @default(now())
   updated_at DateTime? @default(now())
 
-  product products @relation(fields: [product_id], references: [id])
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
   method  method   @relation(fields: [method_id], references: [id])
 
   @@map("product_method")
@@ -233,7 +233,7 @@ model order_items {
   updated_at      DateTime? @default(now())
 
   order   orders?   @relation(fields: [order_id], references: [id])
-  product products? @relation(fields: [product_id], references: [id])
+  product products? @relation(fields: [product_id], references: [id], onDelete: Cascade)
   variant variant?  @relation(fields: [variant_id], references: [id])
   size    size?     @relation(fields: [size_id], references: [id])
 
@@ -276,7 +276,7 @@ model product_discount {
   created_at  DateTime? @default(now())
   updated_at  DateTime? @default(now())
 
-  product  products? @relation(fields: [product_id], references: [id])
+  product  products? @relation(fields: [product_id], references: [id], onDelete: Cascade)
   discount discount? @relation(fields: [discount_id], references: [id])
 
   @@map("product_discount")
@@ -290,7 +290,7 @@ model product_promo_card {
   updated_at    DateTime? @default(now())
 
   promo  promo_card? @relation(fields: [promo_card_id], references: [id])
-  product products?   @relation(fields: [product_id], references: [id])
+  product products?   @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
   @@map("product_promo_card")
 }
@@ -318,7 +318,7 @@ model cart_items {
   updated_at DateTime? @default(now())
 
   cart    cart    @relation(fields: [cart_id], references: [id])
-  product products @relation(fields: [product_id], references: [id])
+  product products @relation(fields: [product_id], references: [id], onDelete: Cascade)
   variant variant? @relation(fields: [variant_id], references: [id])
   size    size?    @relation(fields: [size_id], references: [id])
 
