@@ -147,3 +147,5 @@ dev.db
 
 /src/generated/prisma
 uploads
+
+/generated/prisma
