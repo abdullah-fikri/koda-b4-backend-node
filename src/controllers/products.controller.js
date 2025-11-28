@@ -1,3 +1,4 @@
+import hateoas from "../lib/hateoas.js";
 import upload from "../lib/upload.js";
 import productsModel from "../models/products.model.js";
 import { validationResult } from "express-validator";
@@ -21,23 +22,34 @@ const {
  */
 async function getProducts(req, res) {
   try {
-    const { search = "", sort = "" } = req.query;
-    let results = await getAllProducts(search);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 5;
+    const search = req.query.search || "";
 
-    if (sort === "cheap") {
-      results = results.sort((a, b) => a.price - b.price);
-    } else if (sort === "expensive") {
-      results = results.sort((a, b) => b.price - a.price);
-    }
+    const offset = (page - 1) * limit;
+
+    const { products, totalItems } = await getAllProducts(search, limit, offset);
+    const totalPage = Math.ceil(totalItems / limit);
+
+    const links = hateoas(req, page, limit, totalPage);
+
     res.status(200).json({
       success: true,
-      message: "list all products",
-      results,
+      message: "admin product list",
+      pagination: {
+        page,
+        limit,
+        total_page: totalPage,
+        total_items: totalItems,
+        links,
+      },
+      data: products,
     });
-  } catch (error) {
+
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 }
@@ -52,19 +64,20 @@ async function getProducts(req, res) {
 async function getProduct(req, res) {
   try {
     const id = parseInt(req.params.id);
-    const result = await getProductById(id);
+    const product = await getProductById(id);
 
-    if (!result) {
-      return res.status(400).json({
+    if (!product) {
+      return res.status(404).json({
         success: false,
         message: "product not found",
       });
     }
 
+    const formatRespon = formatProduct(product);
     res.status(200).json({
       success: true,
       message: "product found",
-      results: result,
+      results: formatRespon,
     });
   } catch (error) {
     res.status(500).json({
@@ -199,39 +212,24 @@ async function uploadPictureProduct(req, res) {
 async function update(req, res) {
   try {
     const id = parseInt(req.params.id);
-    const { name, price } = req.body;
+    const product = await updateProduct(id, req.body);
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: "validation error",
-        result: errors.array(),
-      });
-    }
-
-    const updated = await updateProduct(
-      id,
-      name,
-      price ? parseFloat(price) : undefined
-    );
-
-    if (!updated) {
+    if (!product) {
       return res.status(404).json({
         success: false,
-        message: "product not found",
+        message: "Product not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "product updated successfully",
-      results: updated,
+      message: "Product updated",
+      data: product,
     });
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: err.message,
     });
   }
 }
@@ -267,6 +265,38 @@ async function remove(req, res) {
     });
   }
 }
+
+function formatProduct(p) {
+  return {
+    id: p.id,
+    name: p.name,
+    description: p.description,
+    min_price:
+      p.sizes.length > 0
+        ? Math.min(...p.sizes.map((s) => Number(s.price)))
+        : Number(p.price),
+
+    stock: p.stock,
+    category: p.category?.name ?? "",
+
+    images: p.images.map((img) => img.image),
+
+    variants: p.variants.map((v) => ({
+      variant_id: v.variant?.id ?? 0,
+      name: v.variant?.name ?? "",
+    })),
+
+    sizes: p.sizes.map((s) => ({
+      size_id: s.size?.id ?? 0,
+      size_name: s.size?.name ?? "",
+      price: Number(s.price),
+    })),
+
+    created_at: p.created_at,
+    updated_at: p.updated_at,
+  };
+}
+
 
 export default {
   getProducts,
