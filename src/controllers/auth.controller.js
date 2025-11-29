@@ -70,7 +70,7 @@ async function authLogin(req, res) {
       }
       const { email, password } = req.body;
       const user = await loginModel(email);
-      const token = jwt.sign({id: user.id}, process.env.APP_SECRET, {
+      const token = jwt.sign({id: user.id, role: user.role}, process.env.APP_SECRET, {
         expiresIn: "15m"
       })
       if (!user) {
