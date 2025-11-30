@@ -95,6 +95,7 @@ async function createProduct(req) {
     description,
     stock,
     category_id,
+    price,
     variants = [],
     sizes = [],
   } = req;
@@ -106,7 +107,7 @@ async function createProduct(req) {
         description,
         stock,
         category_id,
-        price: 0,
+        price: parseInt(price),
       },
     });
 
@@ -266,9 +267,9 @@ async function getRecommendationsByCategory(categoryName, excludeID) {
     },
     include: {
       category: true,
-      product_img: true,
-      product_variant: { include: { variant: true } },
-      product_size: { include: { size: true } }
+      images: true, 
+      variants: { include: { variant: true }},
+      sizes: { include: { size: true }}
     },
     take: 3,
     orderBy: { created_at: "desc" }
@@ -278,23 +279,25 @@ async function getRecommendationsByCategory(categoryName, excludeID) {
     id: p.id,
     name: p.name,
     description: p.description,
-    min_price: p.product_size.length > 0
-      ? Math.min(...p.product_size.map(ps => ps.price))
-      : p.price,
+    min_price: p.sizes.length > 0
+      ? Math.min(...p.sizes.map(ps => Number(ps.price)))
+      : Number(p.price),
+
     stock: p.stock,
     category: p.category?.name ?? "",
-    images: p.product_img.map(img => img.image),
-    variants: p.product_variant.map(v => ({
+
+    images: p.images.map(img => img.image),
+
+    variants: p.variants.map(v => ({
       variant_id: v.variant?.id || 0,
       name: v.variant?.name || ""
     })),
-    sizes: p.product_size.map(s => ({
+
+    sizes: p.sizes.map(s => ({
       size_id: s.size.id,
       size_name: s.size.name,
-      price: s.price
-    })),
-    created_at: p.created_at,
-    updated_at: p.updated_at
+      price: Number(s.price)
+    }))
   }));
 }
 
@@ -340,6 +343,81 @@ export async function getFavoriteProducts(page, limit) {
 }
 
 
+/// user products
+async function getAllProductsUser({
+  search = "",
+  page = 1,
+  limit = 10,
+  sort = "",
+  minPrice,
+  maxPrice,
+  categoryIDs = [],
+}) {
+  const offset = (page - 1) * limit;
+
+  const orderByMap = {
+    oldest:     { created_at: "asc" },
+    price_low:  { price: "asc" },
+    price_high: { price: "desc" },
+    name_asc:   { name: "asc" },
+    name_desc:  { name: "desc" },
+  };
+
+  const orderBy = orderByMap[sort] || { created_at: "desc" };
+
+  const where = {
+    AND: [],
+  };
+
+  if (search) {
+    where.AND.push({
+      OR: [
+        { name: { contains: search, mode: "insensitive" } },
+        { category: { name: { contains: search, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  if (categoryIDs.length > 0) {
+    where.AND.push({
+      category_id: { in: categoryIDs },
+    });
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    const priceCondition = {};
+    if (minPrice !== undefined) priceCondition.gte = minPrice;
+    if (maxPrice !== undefined) priceCondition.lte = maxPrice;
+
+    where.AND.push({
+      price: priceCondition,
+    });
+  }
+
+  if (where.AND.length === 0) {
+    delete where.AND;
+  }
+
+  const [products, total] = await Promise.all([
+    prisma.products.findMany({
+      where,
+      skip: offset,
+      take: limit,
+      orderBy,
+      include: {
+        category: { select: { name: true } },
+        images: { select: { image: true } },
+        variants: { include: { variant: true } },
+        sizes: { include: { size: true } },
+      },
+    }),
+
+    prisma.products.count({ where }),
+  ]);
+
+  return { products, total };
+}
+
 
 export default {
   getAllProducts,
@@ -348,5 +426,6 @@ export default {
   updateProduct,
   deleteProduct,
   getRecommendationsByCategory,
-  getFavoriteProducts
+  getFavoriteProducts,
+  getAllProductsUser
 };
