@@ -8,6 +8,12 @@ import orderRouter from "./order.router.js"
 
 const router = express.Router();
 
+router.get("/", (req, res)=>{
+    res.status(200).json({
+        success: true,
+        message: "bacend is running well"
+    })
+})
 router.use(authRouter);
 router.use(productsRouter);
 router.use(userRouter)
