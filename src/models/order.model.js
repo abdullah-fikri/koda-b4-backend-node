@@ -237,8 +237,51 @@ async function getOrderDetail(orderId) {
   };
 }
 
+
+// all order admin
+async function getAllOrdersModel() {
+  const orders = await prisma.orders.findMany({
+    select: {
+      id: true,
+      order_date: true,
+      shipping: {
+        select: {
+          name: true,
+        },
+      },
+      items: {
+        select: {
+          subtotal: true,
+        },
+      },
+    },
+    orderBy: {
+      order_date: "desc",
+    },
+  });
+
+  return orders.map(o => ({
+    id: o.id,
+    date: o.order_date,
+    status: o.shipping?.name || null,
+    total: o.items.reduce((acc, item) => acc + Number(item.subtotal || 0), 0),
+  }));
+}
+
+// update order status admin
+async function updateOrderStatusModel(orderID, statusID) {
+  return prisma.orders.update({
+    where: { id: orderID },
+    data: {
+      shipping_id: statusID,
+    },
+  });
+}
+
 export default {
   createOrder,
   getOrderHistory,
   getOrderDetail,
+  getAllOrdersModel,
+  updateOrderStatusModel
 };
