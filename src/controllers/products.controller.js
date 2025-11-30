@@ -16,13 +16,15 @@ const {
 } = productsModel;
 
 /**
- * GET /products
- * @summary Get all products (admin)
- * @tags products
- * @param {string} search.query.optional - Search keyword
- * @param {number} page.query.optional - Page number
- * @param {number} limit.query.optional - Number of items per page
- * @returns {object} 200 - List of products with pagination
+ * GET /admin/products
+ * @summary Get all products (admin only)
+ * @tags Admin - Products
+ * @security bearerAuth
+ * @param {string} search.query - Search keyword for product name
+ * @param {integer} page.query - Page number (default: 1)
+ * @param {integer} limit.query - Number of items per page (default: 5)
+ * @return {object} 200 - Success response with pagination
+ * @return {object} 500 - Server error
  */
 async function getProducts(req, res) {
   try {
@@ -60,11 +62,12 @@ async function getProducts(req, res) {
 
 /**
  * GET /products/{id}
- * @summary Get product by ID
- * @tags products
- * @param {number} id.path.required - Product ID
- * @returns {object} 200 - Product detail + recommendations
- * @returns {object} 404 - Product not found
+ * @summary Get product by ID with recommendations
+ * @tags Products
+ * @param {integer} id.path.required - Product ID
+ * @return {object} 200 - Product detail with recommendations
+ * @return {object} 404 - Product not found
+ * @return {object} 500 - Server error
  */
 async function getProduct(req, res) {
   try {
@@ -97,20 +100,32 @@ async function getProduct(req, res) {
 
 /**
  * POST /products
- * @summary Create product
- * @tags products
- * @param {object} request.body.required - Product payload
- * @property {string} name
- * @property {string} description
- * @property {number} price
- * @property {number} stock
- * @property {number} category_id
- * @property {array<number>} variants
- * @property {array<object>} sizes
- * @property {number} sizes[].size_id
- * @property {number} sizes[].price
- * @returns {object} 201 - Created successfully
- * @returns {object} 400 - Validation error
+ * @summary Create new product (admin only)
+ * @tags Admin - Products
+ * @security bearerAuth
+ * @param {object} request.body.required - Product data
+ * @return {object} 201 - Product created successfully
+ * @return {object} 400 - Validation error
+ * @return {object} 500 - Server error
+ * @example request - Create product example
+ * {
+ *   "name": "New Product",
+ *   "description": "Product description",
+ *   "price": 50000,
+ *   "stock": 100,
+ *   "category_id": 1,
+ *   "variants": [1, 2],
+ *   "sizes": [
+ *     {
+ *       "size_id": 1,
+ *       "price": 50000
+ *     },
+ *     {
+ *       "size_id": 2,
+ *       "price": 55000
+ *     }
+ *   ]
+ * }
  */
 async function create(req, res) {
   try {
@@ -164,12 +179,16 @@ async function create(req, res) {
 }
 
 /**
- * POST /products/{id}/picture
- * @summary Upload product picture
- * @tags products
- * @param {number} id.path.required
- * @param {file} picture.formData.required
- * @returns {object} 200 - upload result
+ * PATCH /products/{id}/picture
+ * @summary Upload product picture (admin only)
+ * @tags Admin - Products
+ * @security bearerAuth
+ * @param {integer} id.path.required - Product ID
+ * @param {string} picture.form-data.required - Product image file - image/png, image/jpeg
+ * @consumes multipart/form-data
+ * @return {object} 200 - Upload success
+ * @return {object} 400 - Bad request or product not found
+ * @return {object} 500 - Server error
  */
 async function uploadPictureProduct(req, res) {
   const id = parseInt(req.params.id);
@@ -220,11 +239,31 @@ async function uploadPictureProduct(req, res) {
 
 /**
  * PATCH /products/{id}
- * @summary Update product
- * @tags products
- * @param {number} id.path.required
- * @param {ProductCreate} request.body
- * @returns {Product} 200
+ * @summary Update product (admin only)
+ * @tags Admin - Products
+ * @security bearerAuth
+ * @param {integer} id.path.required - Product ID
+ * @param {object} request.body.required - Product data to update
+ * @return {object} 200 - Product updated successfully
+ * @return {object} 400 - Validation error
+ * @return {object} 404 - Product not found
+ * @return {object} 500 - Server error
+ * @example request - Update product example
+ * {
+ *   "name": "Updated Product Name",
+ *   "description": "Updated description",
+ *   "price": 60000,
+ *   "stock": 150,
+ *   "category_id": 2,
+ *   "images": ["new-image1.jpg", "new-image2.jpg"],
+ *   "variants": [1, 3],
+ *   "sizes": [
+ *     {
+ *       "sizeId": 1,
+ *       "price": 60000
+ *     }
+ *   ]
+ * }
  */
 async function update(req, res) {
   try {
@@ -253,10 +292,13 @@ async function update(req, res) {
 
 /**
  * DELETE /products/{id}
- * @summary Delete product
- * @tags products
- * @param {number} id.path.required
- * @returns {object} 200 - success message
+ * @summary Delete product (admin only)
+ * @tags Admin - Products
+ * @security bearerAuth
+ * @param {integer} id.path.required - Product ID
+ * @return {object} 200 - Product deleted successfully
+ * @return {object} 404 - Product not found
+ * @return {object} 500 - Server error
  */
 async function remove(req, res) {
   try {
@@ -314,12 +356,13 @@ function formatProduct(p) {
 }
 
 /**
- * GET /products/favorite
- * @summary Get favorite products (cached)
- * @tags products
- * @param {number} page.query.optional
- * @param {number} limit.query.optional
- * @returns {object} 200 - favorite products
+ * GET /favorite-products
+ * @summary Get favorite products (with cache)
+ * @tags Products
+ * @param {integer} page.query - Page number (default: 1)
+ * @param {integer} limit.query - Number of items per page (default: 4)
+ * @return {object} 200 - Favorite products with pagination
+ * @return {object} 500 - Server error
  */
 async function favoriteProducts(req, res) {
   try {
@@ -364,7 +407,20 @@ async function favoriteProducts(req, res) {
   }
 }
 
-
+/**
+ * GET /products
+ * @summary Get all products for users with filters
+ * @tags Products
+ * @param {string} search.query - Search by name or category
+ * @param {integer} page.query - Page number (default: 1)
+ * @param {integer} limit.query - Items per page (default: 10)
+ * @param {string} sort.query - Sort order: oldest, price_low, price_high, name_asc, name_desc
+ * @param {integer} min_price.query - Minimum price filter
+ * @param {integer} max_price.query - Maximum price filter
+ * @param {array<integer>} category[].query - Category IDs filter (can be multiple)
+ * @return {object} 200 - Products list with filters applied
+ * @return {object} 500 - Server error
+ */
 async function getAllProductsUserControler(req, res) {
   try {
     const search = req.query.search || "";
