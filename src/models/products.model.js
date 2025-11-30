@@ -171,6 +171,11 @@ async function updateProduct(id, req) {
     hasUpdate = true;
   }
 
+  if (req.price !== undefined){
+    updateData.price = Number(req.price)
+    hasUpdate = true
+  }
+
   if (req.stock !== undefined) {
     updateData.stock = req.stock;
     hasUpdate = true;
