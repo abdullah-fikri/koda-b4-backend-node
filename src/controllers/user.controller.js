@@ -13,10 +13,11 @@ const {
 /**
  * GET /admin/user
  * @summary Get all users (admin only)
- * @tags admin-users
+ * @tags Admin - Users
  * @security bearerAuth
  * @param {string} search.query - Search by username
- * @returns {object} 200 - List of users
+ * @return {object} 200 - Success response
+ * @return {object} 500 - Error response
  */
 async function getAllUserController(req, res){
     try {
@@ -39,10 +40,12 @@ async function getAllUserController(req, res){
 /**
  * GET /admin/user/{id}
  * @summary Get user by ID (admin only)
- * @tags admin-users
+ * @tags Admin - Users
  * @security bearerAuth
- * @param {number} id.path - User ID
- * @returns {object} 200 - User detail
+ * @param {integer} id.path.required - User ID
+ * @return {object} 200 - Success response
+ * @return {object} 400 - User not found
+ * @return {object} 500 - Error response
  */
 async function getUserByIdController(req, res){
     try {
@@ -72,14 +75,19 @@ async function getUserByIdController(req, res){
 /**
  * PATCH /admin/user/{id}
  * @summary Update user by admin
- * @tags admin-users
+ * @tags Admin - Users
  * @security bearerAuth
- * @param {number} id.path - User ID
- * @param {string} request.body.role - New role
- * @param {string} request.body.username - Username
- * @param {string} request.body.address - Address
- * @param {string} request.body.phone - Phone
- * @returns {object} 200 - Updated user
+ * @param {integer} id.path.required - User ID
+ * @param {object} request.body.required - Update user data
+ * @return {object} 200 - Success response
+ * @return {object} 500 - Error response
+ * @example request - Update user example
+ * {
+ *   "role": "admin",
+ *   "username": "fiki",
+ *   "address": "pancoran mas",
+ *   "phone": "08987654321"
+ * }
  */
 async function updateUserController(req, res){
     try {
@@ -110,10 +118,12 @@ async function updateUserController(req, res){
 /**
  * DELETE /admin/user/{id}
  * @summary Delete user (admin only)
- * @tags admin-users
+ * @tags Admin - Users
  * @security bearerAuth
- * @param {number} id.path - User ID
- * @returns {object} 200 - Delete success
+ * @param {integer} id.path.required - User ID
+ * @return {object} 200 - Success response
+ * @return {object} 404 - User not found
+ * @return {object} 500 - Error response
  */
 async function removeUserController(req, res){
     try {
@@ -143,13 +153,16 @@ async function removeUserController(req, res){
 /**
  * PATCH /admin/user/{id}/image
  * @summary Upload profile picture (admin only)
- * @tags admin-users
+ * @tags Admin - Users
  * @security bearerAuth
- * @param {number} id.path - User ID
- * @param {file} image.formData - Profile image
- * @returns {object} 200 - Upload success
+ * @param {integer} id.path.required - User ID
+ * @param {string} image.form-data.required - Profile image file - image/png, image/jpeg
+ * @consumes multipart/form-data
+ * @return {object} 200 - Success response
+ * @return {object} 400 - Bad request
+ * @return {object} 404 - User not found
+ * @return {object} 500 - Error response
  */
-// upload image profile
 async function uploadProfilePicture(req, res){
     const id = parseInt(req.params.id)
     const user = await getUserById(id)
@@ -196,11 +209,12 @@ async function uploadProfilePicture(req, res){
 /**
  * GET /user/profile
  * @summary Get my profile
- * @tags user
+ * @tags User - Profile
  * @security bearerAuth
- * @returns {object} 200 - My profile data
+ * @return {object} 200 - Success response
+ * @return {object} 404 - User not found
+ * @return {object} 500 - Error response
  */
-//user 
 async function getMyProfileController(req, res) {
     try {
         const id = req.jwtpayload.id;
@@ -230,19 +244,26 @@ async function getMyProfileController(req, res) {
 /**
  * PATCH /user/profile
  * @summary Update my profile
- * @tags user
+ * @tags User - Profile
  * @security bearerAuth
- * @param {string} request.body.username - New username
- * @param {string} request.body.address - New address
- * @param {string} request.body.phone - New phone
- * @returns {object} 200 - Profile updated
+ * @param {object} request.body.required - Profile data to update
+ * @return {object} 200 - Success response
+ * @return {object} 404 - User not found
+ * @return {object} 500 - Error response
+ * @example request - Update profile example
+  * {
+ *   "username": "fiki",
+ *   "address": "pancoran mas",
+ *   "password": "newPassword",
+ *   "phone": "08123456789"
+ * }
  */
 async function updateMyProfileController(req, res) {
     try {
         const id = req.jwtpayload.id;
-        const { username, address, phone } = req.body;
+        const { username,password, address, phone } = req.body;
 
-        const updated = await updateMyProfile(id, username, address, phone);
+        const updated = await updateMyProfile(id, username,password, address, phone);
 
         if (!updated) {
             return res.status(404).json({
@@ -267,10 +288,14 @@ async function updateMyProfileController(req, res) {
 /**
  * PATCH /user/image
  * @summary Upload my profile picture
- * @tags user
+ * @tags User - Profile
  * @security bearerAuth
- * @param {file} image.formData - Profile image
- * @returns {object} 200 - Upload success
+ * @param {string} image.form-data.required - Profile image file - image/png, image/jpeg
+ * @consumes multipart/form-data
+ * @return {object} 200 - Success response
+ * @return {object} 400 - Bad request
+ * @return {object} 404 - User not found
+ * @return {object} 500 - Error response
  */
 async function uploadMyProfilePictureController(req, res) {
     const id = req.jwtpayload.id;  
