@@ -2,6 +2,7 @@ import hateoas from "../lib/hateoas.js";
 import upload from "../lib/upload.js";
 import productsModel from "../models/products.model.js";
 import { validationResult } from "express-validator";
+import redis from "../lib/redis.js"
 
 const {
   getAllProducts,
@@ -9,17 +10,19 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-  getFavoriteProducts
+  getFavoriteProducts,
+  getAllProductsUser,
+  getRecommendationsByCategory
 } = productsModel;
 
 /**
  * GET /products
- * @summary get all products
+ * @summary Get all products (admin)
  * @tags products
- * @param {string} search.query - search products by name
- * @param {string} sort.query - cheap or expensive
- * @return {object} 200 - success response
- * @return {object} 401 - not found response
+ * @param {string} search.query.optional - Search keyword
+ * @param {number} page.query.optional - Page number
+ * @param {number} limit.query.optional - Number of items per page
+ * @returns {object} 200 - List of products with pagination
  */
 async function getProducts(req, res) {
   try {
@@ -36,7 +39,7 @@ async function getProducts(req, res) {
 
     res.status(200).json({
       success: true,
-      message: "admin product list",
+      message: "product list",
       pagination: {
         page,
         limit,
@@ -57,10 +60,11 @@ async function getProducts(req, res) {
 
 /**
  * GET /products/{id}
- * @summary get product by id
- * @param {string} id.path - id product
+ * @summary Get product by ID
  * @tags products
- * @returns {object} 200 - success response
+ * @param {number} id.path.required - Product ID
+ * @returns {object} 200 - Product detail + recommendations
+ * @returns {object} 404 - Product not found
  */
 async function getProduct(req, res) {
   try {
@@ -75,10 +79,13 @@ async function getProduct(req, res) {
     }
 
     const formatRespon = formatProduct(product);
+    const categoryProduct = product.category?.name;
+    const recommendation = await getRecommendationsByCategory(categoryProduct, id)
     res.status(200).json({
       success: true,
       message: "product found",
       results: formatRespon,
+      recommendation: recommendation
     });
   } catch (error) {
     res.status(500).json({
@@ -90,15 +97,20 @@ async function getProduct(req, res) {
 
 /**
  * POST /products
- * @summary create product
+ * @summary Create product
  * @tags products
- * @param {object} request.body.required - Product data
- * @example request - example payload
- * {
- *   "name": "soto",
- *   "price": 25000
- * }
- * @returns {object} 200 - success response
+ * @param {object} request.body.required - Product payload
+ * @property {string} name
+ * @property {string} description
+ * @property {number} price
+ * @property {number} stock
+ * @property {number} category_id
+ * @property {array<number>} variants
+ * @property {array<object>} sizes
+ * @property {number} sizes[].size_id
+ * @property {number} sizes[].price
+ * @returns {object} 201 - Created successfully
+ * @returns {object} 400 - Validation error
  */
 async function create(req, res) {
   try {
@@ -116,6 +128,7 @@ async function create(req, res) {
       description,
       stock,
       category_id,
+      price,
       variants = [],
       sizes = [],
     } = req.body;
@@ -125,6 +138,7 @@ async function create(req, res) {
       description,
       stock: parseInt(stock),
       category_id: parseInt(category_id),
+      price: parseInt(price),
       variants,
       sizes,
     });
@@ -149,6 +163,14 @@ async function create(req, res) {
   }
 }
 
+/**
+ * POST /products/{id}/picture
+ * @summary Upload product picture
+ * @tags products
+ * @param {number} id.path.required
+ * @param {file} picture.formData.required
+ * @returns {object} 200 - upload result
+ */
 async function uploadPictureProduct(req, res) {
   const id = parseInt(req.params.id);
   const product = await getProductById(id);
@@ -197,18 +219,12 @@ async function uploadPictureProduct(req, res) {
 }
 
 /**
- * PUT /products/{id}
- * @summary update product
+ * PATCH /products/{id}
+ * @summary Update product
  * @tags products
- * @param {number} id.path.required - product id
- * @param {object} request.body.required - product data to update
- * @example request - example payload
- * {
- *   "name": "matcha latte",
- *   "price": 30000
- * }
- * @returns {object} 200 - success response
- * @returns {object} 400 - product update error
+ * @param {number} id.path.required
+ * @param {ProductCreate} request.body
+ * @returns {Product} 200
  */
 async function update(req, res) {
   try {
@@ -237,11 +253,10 @@ async function update(req, res) {
 
 /**
  * DELETE /products/{id}
- * @summary delete product
+ * @summary Delete product
  * @tags products
- * @param {number} id.path.required - product id
- * @returns {object} 200 - success response
- * @returns {object} 400 - product not found
+ * @param {number} id.path.required
+ * @returns {object} 200 - success message
  */
 async function remove(req, res) {
   try {
@@ -298,24 +313,46 @@ function formatProduct(p) {
   };
 }
 
-
-export async function favoriteProducts(req, res) {
+/**
+ * GET /products/favorite
+ * @summary Get favorite products (cached)
+ * @tags products
+ * @param {number} page.query.optional
+ * @param {number} limit.query.optional
+ * @returns {object} 200 - favorite products
+ */
+async function favoriteProducts(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 4;
 
+    const cacheKey = `favorite:page=${page}:limit=${limit}`;
+
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+
+      return res.status(200).json({
+        success: true,
+        message: "favorite products (from cache)",
+        links: parsed.links,
+        data: parsed.data,
+      });
+    }
+
     const { products, total } = await getFavoriteProducts(page, limit);
     const mapped = products.map(formatProduct);
-
     const totalPage = Math.ceil(total / limit);
-
     const links = hateoas(req, page, limit, totalPage);
+
+    const responseData = { links, data: mapped };
+
+    await redis.setEx(cacheKey, 60, JSON.stringify(responseData));
 
     return res.status(200).json({
       success: true,
       message: "favorite products",
-      links,
-      data: mapped,
+      ...responseData
     });
 
   } catch (error) {
@@ -328,6 +365,101 @@ export async function favoriteProducts(req, res) {
 }
 
 
+async function getAllProductsUserControler(req, res) {
+  try {
+    const search = req.query.search || "";
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+
+    const sort = req.query.sort || "";
+    const minPrice = req.query.min_price ? parseInt(req.query.min_price) : undefined;
+    const maxPrice = req.query.max_price ? parseInt(req.query.max_price) : undefined;
+
+    const categoryIDs = req.query["category[]"]
+      ? Array.isArray(req.query["category[]"])
+        ? req.query["category[]"].map(Number)
+        : [Number(req.query["category[]"])]
+      : [];
+
+    const isCachable = (
+      search === "" && 
+      sort === "" && 
+      minPrice === undefined && 
+      maxPrice === undefined && 
+      categoryIDs.length === 0
+    );
+
+    let cacheKey = "";
+    if (isCachable) {
+      cacheKey = `products:page:${page}:limit:${limit}`;
+
+      // cek cache
+      try {
+        const cachedData = await redis.get(cacheKey);
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          return res.json({
+            success: true,
+            message: "success from cache",
+            pagination: parsed.pagination,
+            _links: parsed._links,
+            result: parsed.result,
+          });
+        }
+      } catch (cacheErr) {
+        console.error("Cache error:", cacheErr);
+      }
+    }
+
+    const { products, total } = await getAllProductsUser({
+      search,
+      page,
+      limit,
+      sort,
+      minPrice,
+      maxPrice,
+      categoryIDs,
+    });
+
+    const formatRespon = products.map(formatProduct);
+
+    const totalPage = Math.ceil(total / limit);
+
+    const links = hateoas(req, page, limit, totalPage);
+
+    const responseData = {
+      success: true,
+      message: "products fetched",
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPage,
+      },
+      _links: links,
+      result: formatRespon,
+    };
+
+    if (isCachable) {
+      try {
+        await redis.setEx(cacheKey, 900, JSON.stringify(responseData));
+      } catch (cacheErr) {
+        console.error("Cache set error:", cacheErr);
+      }
+    }
+
+    res.json(responseData);
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
+
+
 export default {
   getProducts,
   getProduct,
@@ -335,5 +467,6 @@ export default {
   update,
   remove,
   uploadPictureProduct,
-  favoriteProducts
+  favoriteProducts,
+  getAllProductsUserControler
 };
