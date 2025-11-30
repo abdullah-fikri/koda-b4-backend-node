@@ -5,7 +5,23 @@ const {
     deleteCartItem
 } = cartModel
 
-
+/**
+ * POST /cart
+ * @summary Add product to cart
+ * @tags Cart
+ * @security bearerAuth
+ * @param {object} request.body.required - Cart item data
+ * @return {object} 200 - Product added to cart successfully
+ * @return {object} 400 - Validation error (qty invalid)
+ * @return {object} 500 - Server error
+ * @example request - Add to cart example
+ * {
+ *   "productId": 1,
+ *   "variantId": 2,
+ *   "sizeId": 3,
+ *   "qty": 2
+ * }
+ */
 async function addToCartController(req, res) {
   try {
     const userID = req.jwtpayload.id;
@@ -38,8 +54,14 @@ async function addToCartController(req, res) {
   }
 }
 
-
-
+/**
+ * GET /cart
+ * @summary Get user's cart items
+ * @tags Cart
+ * @security bearerAuth
+ * @return {object} 200 - Cart items retrieved successfully
+ * @return {object} 500 - Server error
+ */
 async function getCartController(req, res) {
   try {
     const userID = req.jwtpayload.id;
@@ -58,8 +80,15 @@ async function getCartController(req, res) {
   }
 }
 
-
-
+/**
+ * DELETE /cart/{id}
+ * @summary Remove item from cart
+ * @tags Cart
+ * @security bearerAuth
+ * @param {integer} id.path.required - Cart item ID
+ * @return {object} 200 - Item removed successfully
+ * @return {object} 500 - Server error
+ */
 async function deleteCartController(req, res) {
   try {
     const userID = req.jwtpayload.id;
