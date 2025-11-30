@@ -28,4 +28,7 @@ router.post(
   auth.authLogin
 );
 
+router.post("/forgot-password", auth.forgotPassword)
+router.post("/reset-password", auth.resetPassword)
+
 export default router;
