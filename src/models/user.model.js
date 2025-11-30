@@ -33,7 +33,7 @@ async function getUserById(id){
 
 
 // update/edit user
-async function updateUser(id, role, username, address, phone, image=null) {
+async function updateUser(id, role, username, address, phone, profile_picture=null) {
   try {
     const user = await prisma.users.findUnique({
       where: { id },
@@ -50,7 +50,7 @@ async function updateUser(id, role, username, address, phone, image=null) {
         username: username ?? user.profile.username,
         address: address ?? user.profile.address,
         phone: phone ?? user.profile.phone,
-        image: image ?? user.profile.image
+        profile_picture: profile_picture ?? user.profile.profile_picture
       }
     }
 
@@ -86,4 +86,44 @@ async function removeUser(id){
 }
 
 
-export default { getAllUser, getUserById, updateUser, removeUser };
+// user
+// get my profile
+async function getMyProfile(id) {
+  const result = await prisma.users.findUnique({
+      where: { id },
+      include: {
+          profile: true
+      }
+  })
+  return result
+}
+
+// update my profile
+async function updateMyProfile(id, username, address, phone, profile_picture = null) {
+  try {
+      const user = await prisma.users.findUnique({
+          where: { id },
+          include: { profile: true }
+      });
+
+      if (!user) return null;
+
+      const data = {
+          profile: {
+              update: {
+                  username: username ?? user.profile.username,
+                  address: address ?? user.profile.address,
+                  phone: phone ?? user.profile.phone,
+                  profile_picture: profile_picture ?? user.profile.profile_picture
+              }
+          }
+      };
+
+      return await prisma.users.update({ where: { id }, include: {profile: true},data });
+  } catch (error) {
+      return null;
+  }
+}
+
+
+export default { getAllUser, getUserById, updateUser, removeUser, getMyProfile, updateMyProfile };
