@@ -2,10 +2,29 @@ import orderModel from "../models/order.model.js";
 const {
     createOrder,
     getOrderHistory,
-    getOrderDetail
+    getOrderDetail,
+    getAllOrdersModel,
+    updateOrderStatusModel,
 } = orderModel
 
-
+/**
+ * POST /order
+ * @summary Create new order from cart
+ * @tags Order
+ * @security bearerAuth
+ * @param {object} request.body.required - Order data
+ * @return {object} 200 - Order created successfully
+ * @return {object} 400 - Validation error or cart empty
+ * @return {object} 500 - Server error
+ * @example request - Create order example
+ * {
+ *   "paymentId": 1,
+ *   "methodId": 2,
+ *   "customerName": "fiki",
+ *   "customerPhone": "08123456789",
+ *   "customerAddress": "Jl. pancoran mas"
+ * }
+ */
 async function createOrderController(req, res) {
   try {
     const userId = req.jwtpayload.id;
@@ -33,7 +52,17 @@ async function createOrderController(req, res) {
   }
 }
 
-
+/**
+ * GET /history
+ * @summary Get order history with filters
+ * @tags Order
+ * @security bearerAuth
+ * @param {integer} month.query - Filter by month (1-12, 0 for all)
+ * @param {integer} shipping_id.query - Filter by shipping status ID (0 for all)
+ * @param {integer} page.query - Page number (default: 1)
+ * @return {object} 200 - Order history with pagination
+ * @return {object} 500 - Server error
+ */
 async function orderHistoryController(req, res) {
   try {
     const userId = req.jwtpayload.id;
@@ -66,7 +95,15 @@ async function orderHistoryController(req, res) {
   }
 }
 
-
+/**
+ * GET /order/{id}
+ * @summary Get order detail by ID
+ * @tags Order
+ * @security bearerAuth
+ * @param {integer} id.path.required - Order ID
+ * @return {object} 200 - Order detail
+ * @return {object} 500 - Server error or order not found
+ */
 async function orderDetailController(req, res) {
   try {
     const id = Number(req.params.id);
@@ -85,8 +122,58 @@ async function orderDetailController(req, res) {
 }
 
 
+async function adminOrderListController(req, res) {
+  try {
+    const orders = await getAllOrdersModel();
+
+    return res.status(200).json({
+      success: true,
+      data: orders,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
+async function updateOrderStatusController(req, res) {
+  try {
+    const orderID = parseInt(req.params.id);
+    if (isNaN(orderID)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    const { status } = req.body;
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status is required",
+      });
+    }
+
+    await updateOrderStatusModel(orderID, status);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
 export default {
     createOrderController,
     orderHistoryController,
-    orderDetailController
+    orderDetailController,
+    adminOrderListController,
+    updateOrderStatusController,
 }
