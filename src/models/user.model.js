@@ -1,5 +1,5 @@
 import prisma from "../lib/prisma.js";
-import hashingPassword from "../lib/hashingPassword.js"
+import {hashPassword} from "../lib/hashingPassword.js"
 
 // get all user
 async function getAllUser(search = "") {
@@ -121,7 +121,7 @@ async function updateMyProfile(id, username,password,  address, phone, profile_p
       };
 
       if (password) {
-        const hashed = await hashingPassword(password);
+        const hashed = await hashPassword(password);
         data.password = hashed; 
       }
   
