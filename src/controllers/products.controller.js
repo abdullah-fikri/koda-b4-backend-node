@@ -3,6 +3,8 @@ import upload from "../lib/upload.js";
 import productsModel from "../models/products.model.js";
 import { validationResult } from "express-validator";
 import redis from "../lib/redis.js"
+import prisma from "../lib/prisma.js";
+
 
 const {
   getAllProducts,
@@ -177,14 +179,13 @@ async function create(req, res) {
     });
   }
 }
-
 /**
  * PATCH /products/{id}/picture
  * @summary Upload product picture (admin only)
  * @tags Admin - Products
  * @security bearerAuth
  * @param {integer} id.path.required - Product ID
- * @param {string} picture.form-data.required - Product image file - image/png, image/jpeg
+ * @param {string} picture.formData.required - binary - Product image file (png/jpg)
  * @consumes multipart/form-data
  * @return {object} 200 - Upload success
  * @return {object} 400 - Bad request or product not found
@@ -216,12 +217,22 @@ async function uploadPictureProduct(req, res) {
           message: "file not available",
         });
       }
-      const updated = await updateProduct(
-        id,
-        product.name,
-        product.price,
-        req.file.filename
-      );
+
+      const newImage = await prisma.product_img.create({
+        data: {
+          image: req.file.filename,
+          product_id: id,
+        },
+      });
+
+      const updated = await prisma.products.findUnique({
+        where: { id },
+        include: {
+          images: true,
+          variants: true,
+          sizes: true,
+        },
+      });
 
       return res.status(200).json({
         success: true,
