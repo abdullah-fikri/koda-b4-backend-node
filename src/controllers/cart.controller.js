@@ -1,6 +1,8 @@
 import cartModel from "../models/cart.model.js"
 const {
     addToCart,
+    getCart,
+    deleteCartItem
 } = cartModel
 
 
@@ -38,7 +40,47 @@ async function addToCartController(req, res) {
 
 
 
+async function getCartController(req, res) {
+  try {
+    const userID = req.jwtpayload.id;
+    const carts = await getCart(userID);
+
+    return res.json({
+      success: true,
+      message: "cart successfully",
+      data: carts,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
+
+
+async function deleteCartController(req, res) {
+  try {
+    const userID = req.jwtpayload.id;
+    const cartItemID = parseInt(req.params.id);
+
+    await deleteCartItem(userID, cartItemID);
+
+    return res.json({
+      success: true,
+      message: "Product removed from cart",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
 
 export default {
     addToCartController,
+    getCartController,
+    deleteCartController
 }
