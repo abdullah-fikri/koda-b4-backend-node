@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma.js";
+import hashingPassword from "../lib/hashingPassword.js"
 
 // get all user
 async function getAllUser(search = "") {
@@ -99,7 +100,7 @@ async function getMyProfile(id) {
 }
 
 // update my profile
-async function updateMyProfile(id, username, address, phone, profile_picture = null) {
+async function updateMyProfile(id, username,password,  address, phone, profile_picture = null) {
   try {
       const user = await prisma.users.findUnique({
           where: { id },
@@ -119,11 +120,21 @@ async function updateMyProfile(id, username, address, phone, profile_picture = n
           }
       };
 
-      return await prisma.users.update({ where: { id }, include: {profile: true},data });
-  } catch (error) {
+      if (password) {
+        const hashed = await hashingPassword(password);
+        data.password = hashed; 
+      }
+  
+      return await prisma.users.update({
+        where: { id },
+        data,
+        include: { profile: true },
+      });
+    } catch (error) {
+      console.error(error);
       return null;
+    }
   }
-}
 
 
 export default { getAllUser, getUserById, updateUser, removeUser, getMyProfile, updateMyProfile };
