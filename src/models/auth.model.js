@@ -21,7 +21,26 @@ async function loginModel(email) {
     return user;
 }
 
+// forgot password 
+async function forgotPasswordModel(email) {
+  return prisma.users.findUnique({
+    where: { email },
+    select: { id: true, email: true, role: true },
+  });
+}
+
+// reset password
+async function updateUserPasswordModel(email, hashedPassword) {
+  return prisma.users.update({
+    where: { email },
+    data: { password: hashedPassword },
+  });
+}
+
+
 export default {
     registerModel,
     loginModel,
+    forgotPasswordModel,
+    updateUserPasswordModel
 };
