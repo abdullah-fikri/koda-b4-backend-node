@@ -5,6 +5,7 @@ export default function doc(app){
     info: {
       version: '1.0.0',
       title: 'Backend API',
+      description: "API untuk backend coffeshop"
     },
     security: {
       bearerAuth: {

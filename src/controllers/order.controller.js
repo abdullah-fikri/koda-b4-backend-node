@@ -57,8 +57,8 @@ async function createOrderController(req, res) {
  * @summary Get order history with filters
  * @tags Order
  * @security bearerAuth
- * @param {integer} month.query - Filter by month (1-12, 0 for all)
- * @param {integer} shipping_id.query - Filter by shipping status ID (0 for all)
+ * @param {integer} month.query - Filter by month 1-12
+ * @param {integer} shipping_id.query - Filter by status 
  * @param {integer} page.query - Page number (default: 1)
  * @return {object} 200 - Order history with pagination
  * @return {object} 500 - Server error

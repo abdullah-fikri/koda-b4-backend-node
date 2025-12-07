@@ -9,6 +9,7 @@ const {
   loginModel,
   forgotPasswordModel,
   updateUserPasswordModel,
+  CheckPassword
 } = authModel;
 
 /**
@@ -209,6 +210,14 @@ async function resetPassword(req, res) {
         message: "invalid or expired OTP",
       });
 
+    const check = await CheckPassword(email, null, newPassword);
+    if (!check.success) {
+      return res.status(400).json({
+        success: false,
+        message: check.message,
+      });
+    }
+
     const hashed = await hashPassword(newPassword);
     await updateUserPasswordModel(email, hashed);
 
@@ -225,6 +234,7 @@ async function resetPassword(req, res) {
     });
   }
 }
+
 
 export default {
   authRegister,
